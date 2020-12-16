@@ -127,15 +127,33 @@ def delete_event(eventID):
     return "Deleted succsesfuly", 200
 
 
-"""@app.route('/events/<userID>', methods=['DELETE'])
+@app.route('/events/<userID>', methods=['GET'])
 def get_user_events(userID):
-    schema = EventSchema(only=['id'])
+    schema = UserSchema(only=['id'])
     try:
         schema.load({'id': userID})
     except ValidationError as err:
         return err.messages, 404
-    
-    """
+
+    try:
+        events = []
+        eventusers = session.query(EventUser).filter(EventUser.user_id == userID).all()
+        for eventuser in eventusers:
+            events += session.query(Event).filter(Event.id == eventuser.event_id).all()
+
+    except ValidationError:
+        return "Validation failed", 400
+
+    try:
+        result = jsonify(EventSchema(many=True).dump(events))
+    except ValidationError:
+        return "Validation failed", 400
+
+    return result, 200
+
+
+
+
 
 
 

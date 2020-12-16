@@ -11,6 +11,7 @@ sys.path.append(".")
 from tables import User, Event, EventUser
 
 app = Flask(__name__)
+bcrypt = Bcrypt(app)
 
 engine = create_engine('mysql+pymysql://ppuser:password@localhost:3306/pp?charset=utf8mb4')
 DBSession = sessionmaker(bind=engine)
@@ -124,7 +125,7 @@ def delete_event(eventID):
     session.delete(event)
     session.commit()
 
-    return "Deleted succsesfuly", 200
+    return "Deleted successfully", 200
 
 
 @app.route('/events/<userID>', methods=['GET'])
@@ -150,6 +151,26 @@ def get_user_events(userID):
         return "Validation failed", 400
 
     return result, 200
+
+
+@app.route('/users', methods=['POST'])
+def create_user():
+    data = request.get_json()
+    data = dict(username=data['username'], email=data['email'],
+                       password=bcrypt.generate_password_hash(data['password']).decode('utf-8'))
+
+    schema = UserSchema()
+    if not session.query(User).filter(User.username == data['username']).first() is None:
+        return "This username already exists"
+
+    try:
+        user = schema.load(data)
+    except ValidationError as err:
+        return err.messages, 400
+
+    session.add(user)
+    session.commit()
+    return data, 201
 
 
 

@@ -175,7 +175,7 @@ def create_user():
 
 
 @app.route('/users/<username>', methods=['GET'])
-def getuser_by_ID(username):
+def get_user_by_ID(username):
     schema = UserSchema(only=['username'])
     try:
         schema.load({'username': username})
@@ -196,7 +196,26 @@ def getuser_by_ID(username):
     return user_data, 200
 
 
+@app.route('/sign-in', methods=['GET'])
+def sign_in():
+    username = request.args.get('username')
+    password = request.args.get('password')
 
+    user = session.query(User).filter(User.username == username).first()
+    if user is None:
+        return "No such user", 404
+
+    check_password = bcrypt.check_password_hash(user.password, password)
+    if not check_password:
+        return "Wrong password", 400
+
+    data = UserSchema().dump(user)
+    return data, 200
+
+
+@app.route('/logout', methods=['POST', 'GET'])
+def logout():
+    return 'Logout successfully, 200'
 
 
 if __name__ == '__main__':

@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from marshmallow import Schema, fields, post_load, ValidationError
 
 import os, sys
+
 parent_dir = os.path.abspath(os.path.join(os.getcwd(), ".."))
 sys.path.append(parent_dir)
 sys.path.append(".")
@@ -128,7 +129,7 @@ def delete_event(eventID):
     return "Deleted successfully", 200
 
 
-@app.route('/events/<userID>', methods=['GET'])
+@app.route('/events/conected/<userID>', methods=['GET'])
 def get_user_events(userID):
     schema = UserSchema(only=['id'])
     try:
@@ -157,7 +158,7 @@ def get_user_events(userID):
 def create_user():
     data = request.get_json()
     data = dict(username=data['username'], email=data['email'],
-                       password=bcrypt.generate_password_hash(data['password']).decode('utf-8'))
+                password=bcrypt.generate_password_hash(data['password']).decode('utf-8'))
 
     schema = UserSchema()
     if not session.query(User).filter(User.username == data['username']).first() is None:
@@ -173,6 +174,26 @@ def create_user():
     return data, 201
 
 
+@app.route('/users/<username>', methods=['GET'])
+def getuser_by_ID(username):
+    schema = UserSchema(only=['username'])
+    try:
+        schema.load({'username': username})
+    except ValidationError as err:
+        return err.messages, 404
+
+    schema = UserSchema()
+    try:
+        user = session.query(User).filter(User.username == username).first()
+    except NameError:
+        return "this name is not defined", 404
+
+    try:
+        user_data = UserSchema().dump(user)
+    except ValidationError:
+        return "Validation failed", 400
+
+    return user_data, 200
 
 
 
@@ -180,5 +201,3 @@ def create_user():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-

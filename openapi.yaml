@@ -164,13 +164,21 @@ paths:
           description: Deleted successfully
         '403':
           description: Token bearer is not the creator or token is invalid
-  /events/connected:
+  /events/connected/{userID}:
     get:
       security:
         - bearer: []
       tags:
         - event
       summary: Find all the events to which the current user is connected
+      parameters:
+        - name: userID
+          in: path
+          description: The id of the event to be deleted
+          required: true
+          schema:
+            type: integer
+            format: int64
       responses:
         '200':
           description: Successful operation.

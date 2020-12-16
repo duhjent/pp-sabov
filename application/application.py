@@ -107,7 +107,7 @@ def change_event():
 
     return data, 201
 
-"""
+
 @app.route('/events/<eventID>', methods=['DELETE'])
 def delete_event(eventID):
     schema = EventSchema(only=['id'])
@@ -124,7 +124,19 @@ def delete_event(eventID):
     session.delete(event)
     session.commit()
 
-    return "Deleted succsesfuly", 200"""
+    return "Deleted succsesfuly", 200
+
+
+"""@app.route('/events/<userID>', methods=['DELETE'])
+def get_user_events(userID):
+    schema = EventSchema(only=['id'])
+    try:
+        schema.load({'id': userID})
+    except ValidationError as err:
+        return err.messages, 404
+    
+    """
+
 
 
 if __name__ == '__main__':

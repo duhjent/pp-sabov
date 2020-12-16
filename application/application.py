@@ -37,7 +37,6 @@ class EventSchema(Schema):
     description = fields.String()
     organizer_id = fields.Integer()
     event_date = fields.Date()
-    # users = fields.List(fields.Integer)
 
     @post_load
     def make_event(self, data, **kwargs):
@@ -84,22 +83,48 @@ def add_event():
 
     return data, 201
 
-"""
+
 @app.route('/events', methods=['PUT'])
 def change_event():
     data = request.get_json()
-    
+
     try:
-        res_event = EventSchema().load(data)
+        res_event = EventSchema(only=['id']).load({'id': data['id']})
     except ValidationError:
         return "Validation failed", 400
 
-    session.add_all([res_event])
+    try:
+        event = session.query(Event).filter(Event.id == data['id']).first()
+    except NameError:
+        return "this name is not defined", 404
+
+    event.name = event.name if not 'name' in data else data['name']
+    event.description = event.description if not 'description' in data else data['description']
+    event.event_date = event.event_date if not 'event_date' in data else data['event_date']
+    event.organizer_id = event.organizer_id if not 'organizer_id' in data else data['organizer_id']
+
     session.commit()
 
     return data, 201
-"""
 
+"""
+@app.route('/events/<eventID>', methods=['DELETE'])
+def delete_event(eventID):
+    schema = EventSchema(only=['id'])
+    try:
+        schema.load({'id': eventID})
+    except ValidationError as err:
+        return err.messages, 404
+
+    try:
+        event = session.query(Event).filter(Event.id == eventID).first()
+    except NameError:
+        return "this name is not defined", 404
+
+    session.delete(event)
+    session.commit()
+
+    return "Deleted succsesfuly", 200"""
 
 
 if __name__ == '__main__':

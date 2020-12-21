@@ -27,6 +27,8 @@ def welcome():
 class EventUserSchema(Schema):
     event_id = fields.Integer()
     user_id = fields.Integer()
+    # event_id = fields.Nested('EventSchema', many=True)
+    # user_id = fields.Nested('UserSchema', many=True)
 
     @post_load
     def make_event(self, data, **kwargs):
@@ -39,6 +41,7 @@ class EventSchema(Schema):
     description = fields.String()
     organizer_id = fields.Integer()
     event_date = fields.Date()
+    users = fields.List(fields.Nested(lambda: UserSchema(only=["id"])))
 
     @post_load
     def make_event(self, data, **kwargs):
@@ -74,16 +77,22 @@ def get_events():
 @app.route('/events', methods=['POST'])
 def add_event():
     data = request.get_json()
-
+    users = data.pop('users', None)
     try:
         res_event = EventSchema().load(data)
     except ValidationError:
         return "Validation failed", 400
 
+    if users is not None:
+        res_event.users = []
+        for id in users:
+            res_event.users.append(session.query(User).filter(User.id == id).first())
+
     session.add(res_event)
     session.commit()
+    event = EventSchema().dump(res_event)
 
-    return data, 201
+    return event, 201
 
 
 @app.route('/events', methods=['PUT'])
@@ -105,9 +114,15 @@ def change_event():
     event.event_date = event.event_date if not 'event_date' in data else data['event_date']
     event.organizer_id = event.organizer_id if not 'organizer_id' in data else data['organizer_id']
 
-    session.commit()
+    if 'users' in data:
+        event.users = []
+        for id in data['users']:
+            event.users.append(session.query(User).filter(User.id == id).first())
 
-    return data, 201
+    session.commit()
+    new_event = EventSchema().dump(event)
+
+    return new_event, 201
 
 
 @app.route('/events/<eventID>', methods=['DELETE'])

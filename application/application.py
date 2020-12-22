@@ -217,6 +217,7 @@ def create_user():
 
     session.add(user)
     session.commit()
+    data.pop('password')
     return data, 201
 
 

@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import Column, Integer, String, Date, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 
-engine = create_engine('mysql+pymysql://lab:password@localhost:3306/pplab?charset=utf8mb4', echo=True)
+engine = create_engine('mysql+pymysql://ppuser:password@localhost:3306/pp?charset=utf8mb4', echo=True)
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
 

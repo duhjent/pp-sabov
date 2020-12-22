@@ -3,25 +3,52 @@ from sqlalchemy import create_engine
 from flask_bcrypt import Bcrypt
 from sqlalchemy.orm import sessionmaker
 from marshmallow import Schema, fields, post_load, ValidationError
+from flask_jwt import JWT, jwt_required, current_identity
 
 import os, sys
 
 parent_dir = os.path.abspath(os.path.join(os.getcwd(), ".."))
 sys.path.append(parent_dir)
 sys.path.append(".")
-from tables import User, Event, EventUser
+from tables import User, Event, EventUser, engine, Session
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
 
-engine = create_engine('mysql+pymysql://ppuser:password@localhost:3306/pp?charset=utf8mb4')
-DBSession = sessionmaker(bind=engine)
-session = DBSession()
+# starting jwt config
+app.config['SECRET_KEY'] = '06Oh72gc65dF4WIZzi8oOSIob9LRFegYbgYXs2GdBdOIylIEMS'
+app.config['JWT_AUTH_URL_RULE'] = '/users/login'
+
+def authenticate(username, password):
+    user = session.query(User).filter(User.username == username).first()
+    if user is None:
+        return
+
+    check_password = bcrypt.check_password_hash(user.password, password)
+    if not check_password:
+        return
+
+    return user
+
+def identity(payload):
+    user_id = payload['identity']
+    return session.query(User).filter(User.id == user_id).one_or_none()
+
+jwt = JWT(app, authenticate, identity)
+
+
+session = Session()
 
 
 @app.route('/api/v1/hello-world-26')
 def welcome():
     return 'Hello world 26'
+
+
+@app.route('/protected')
+@jwt_required()
+def protected():
+    return UserSchema().dump(current_identity)
 
 
 class EventUserSchema(Schema):
@@ -75,6 +102,7 @@ def get_events():
 
 
 @app.route('/events', methods=['POST'])
+@jwt_required()
 def add_event():
     data = request.get_json()
     users = data.pop('users', None)
@@ -96,6 +124,7 @@ def add_event():
 
 
 @app.route('/events', methods=['PUT'])
+@jwt_required()
 def change_event():
     data = request.get_json()
 
@@ -108,6 +137,9 @@ def change_event():
         event = session.query(Event).filter(Event.id == data['id']).first()
     except NameError:
         return "this name is not defined", 404
+
+    if event.organizer_id != current_identity.id:
+        return 'you are not the organizer', 403
 
     event.name = event.name if not 'name' in data else data['name']
     event.description = event.description if not 'description' in data else data['description']
@@ -126,6 +158,7 @@ def change_event():
 
 
 @app.route('/events/<eventID>', methods=['DELETE'])
+@jwt_required()
 def delete_event(eventID):
     schema = EventSchema(only=['id'])
     try:
@@ -138,6 +171,9 @@ def delete_event(eventID):
     except NameError:
         return "this name is not defined", 404
 
+    if event.organizer_id != current_identity.id:
+        return 'you are not the organizer', 403
+
     session.delete(event)
     session.commit()
 
@@ -145,6 +181,7 @@ def delete_event(eventID):
 
 
 @app.route('/events/conected/<userID>', methods=['GET'])
+@jwt_required()
 def get_user_events(userID):
     schema = UserSchema(only=['id'])
     try:
@@ -186,6 +223,7 @@ def create_user():
 
     session.add(user)
     session.commit()
+    data.pop('password')
     return data, 201
 
 
@@ -211,26 +249,9 @@ def get_user_by_ID(username):
     return user_data, 200
 
 
-@app.route('/sign-in', methods=['GET'])
-def sign_in():
-    username = request.args.get('username')
-    password = request.args.get('password')
-
-    user = session.query(User).filter(User.username == username).first()
-    if user is None:
-        return "No such user", 404
-
-    check_password = bcrypt.check_password_hash(user.password, password)
-    if not check_password:
-        return "Wrong password", 400
-
-    data = UserSchema().dump(user)
-    return data, 200
-
-
-@app.route('/logout', methods=['POST', 'GET'])
+@app.route('/users/logout', methods=['POST', 'GET'])
 def logout():
-    return 'Logout successfully, 200'
+    return 'task of frontend', 200
 
 
 if __name__ == '__main__':

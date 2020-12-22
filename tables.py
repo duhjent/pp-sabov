@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import Column, Integer, String, Date, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 
-engine = create_engine('mysql+pymysql://ppuser:password@localhost:3306/pp?charset=utf8mb4', echo=True)
+engine = create_engine('mysql+pymysql://sqlalchemy:flaskpass@localhost/flask_app?charset=utf8mb4')
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
 
@@ -27,7 +27,7 @@ class User(Base):
     email = Column(String(60), nullable=False)
     username = Column(String(50), nullable=False)
     password = Column(String(100), nullable=False)
-    organized_events = relationship('Event', back_populates='')
+    organized_events = relationship('Event', back_populates='organizer')
     events = relationship('Event', secondary='event_user')
 
 

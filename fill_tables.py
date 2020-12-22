@@ -18,4 +18,3 @@ session.add(user2)
 session.add(user3)
 
 session.commit()
-

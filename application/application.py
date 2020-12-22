@@ -15,12 +15,40 @@ from tables import User, Event, EventUser, engine, Session
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
 
+# starting jwt config
+app.config['SECRET_KEY'] = '06Oh72gc65dF4WIZzi8oOSIob9LRFegYbgYXs2GdBdOIylIEMS'
+app.config['JWT_AUTH_URL_RULE'] = '/users/login'
+
+def authenticate(username, password):
+    user = session.query(User).filter(User.username == username).first()
+    if user is None:
+        return
+
+    check_password = bcrypt.check_password_hash(user.password, password)
+    if not check_password:
+        return
+
+    return user
+
+def identity(payload):
+    user_id = payload['identity']
+    return session.query(User).filter(User.id == user_id).one_or_none()
+
+jwt = JWT(app, authenticate, identity)
+
+
 session = Session()
 
 
 @app.route('/api/v1/hello-world-26')
 def welcome():
     return 'Hello world 26'
+
+
+@app.route('/protected')
+@jwt_required()
+def protected():
+    return UserSchema().dump(current_identity)
 
 
 class EventUserSchema(Schema):
@@ -208,23 +236,6 @@ def get_user_by_ID(username):
         return "Validation failed", 400
 
     return user_data, 200
-
-
-@app.route('/sign-in', methods=['GET'])
-def sign_in():
-    username = request.args.get('username')
-    password = request.args.get('password')
-
-    user = session.query(User).filter(User.username == username).first()
-    if user is None:
-        return "No such user", 404
-
-    check_password = bcrypt.check_password_hash(user.password, password)
-    if not check_password:
-        return "Wrong password", 400
-
-    data = UserSchema().dump(user)
-    return data, 200
 
 
 @app.route('/logout', methods=['POST', 'GET'])

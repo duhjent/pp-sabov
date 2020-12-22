@@ -101,6 +101,7 @@ def get_events():
     return result, 200
 
 
+@jwt_required
 @app.route('/events', methods=['POST'])
 def add_event():
     data = request.get_json()
@@ -122,6 +123,7 @@ def add_event():
     return event, 201
 
 
+@jwt_required
 @app.route('/events', methods=['PUT'])
 def change_event():
     data = request.get_json()
@@ -152,6 +154,7 @@ def change_event():
     return new_event, 201
 
 
+@jwt_required
 @app.route('/events/<eventID>', methods=['DELETE'])
 def delete_event(eventID):
     schema = EventSchema(only=['id'])
@@ -171,6 +174,7 @@ def delete_event(eventID):
     return "Deleted successfully", 200
 
 
+@jwt_required
 @app.route('/events/conected/<userID>', methods=['GET'])
 def get_user_events(userID):
     schema = UserSchema(only=['id'])

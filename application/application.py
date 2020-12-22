@@ -243,9 +243,9 @@ def get_user_by_ID(username):
     return user_data, 200
 
 
-@app.route('/logout', methods=['POST', 'GET'])
+@app.route('/users/logout', methods=['POST', 'GET'])
 def logout():
-    return 'Logout successfully, 200'
+    return 'task of frontend', 200
 
 
 if __name__ == '__main__':

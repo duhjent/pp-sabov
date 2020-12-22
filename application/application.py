@@ -101,8 +101,8 @@ def get_events():
     return result, 200
 
 
-@jwt_required
 @app.route('/events', methods=['POST'])
+@jwt_required()
 def add_event():
     data = request.get_json()
     users = data.pop('users', None)
@@ -123,8 +123,8 @@ def add_event():
     return event, 201
 
 
-@jwt_required
 @app.route('/events', methods=['PUT'])
+@jwt_required()
 def change_event():
     data = request.get_json()
 
@@ -137,6 +137,9 @@ def change_event():
         event = session.query(Event).filter(Event.id == data['id']).first()
     except NameError:
         return "this name is not defined", 404
+
+    if event.organizer_id != current_identity.id:
+        return 'you are not the organizer', 403
 
     event.name = event.name if not 'name' in data else data['name']
     event.description = event.description if not 'description' in data else data['description']
@@ -154,8 +157,8 @@ def change_event():
     return new_event, 201
 
 
-@jwt_required
 @app.route('/events/<eventID>', methods=['DELETE'])
+@jwt_required()
 def delete_event(eventID):
     schema = EventSchema(only=['id'])
     try:
@@ -168,14 +171,17 @@ def delete_event(eventID):
     except NameError:
         return "this name is not defined", 404
 
+    if event.organizer_id != current_identity.id:
+        return 'you are not the organizer', 403
+
     session.delete(event)
     session.commit()
 
     return "Deleted successfully", 200
 
 
-@jwt_required
 @app.route('/events/conected/<userID>', methods=['GET'])
+@jwt_required()
 def get_user_events(userID):
     schema = UserSchema(only=['id'])
     try:

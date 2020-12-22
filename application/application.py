@@ -3,20 +3,19 @@ from sqlalchemy import create_engine
 from flask_bcrypt import Bcrypt
 from sqlalchemy.orm import sessionmaker
 from marshmallow import Schema, fields, post_load, ValidationError
+from flask_jwt import JWT, jwt_required, current_identity
 
 import os, sys
 
 parent_dir = os.path.abspath(os.path.join(os.getcwd(), ".."))
 sys.path.append(parent_dir)
 sys.path.append(".")
-from tables import User, Event, EventUser
+from tables import User, Event, EventUser, engine, Session
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
 
-engine = create_engine('mysql+pymysql://ppuser:password@localhost:3306/pp?charset=utf8mb4')
-DBSession = sessionmaker(bind=engine)
-session = DBSession()
+session = Session()
 
 
 @app.route('/api/v1/hello-world-26')

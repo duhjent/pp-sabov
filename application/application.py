@@ -105,9 +105,10 @@ def get_events():
 @jwt_required()
 def add_event():
     data = request.get_json()
+    data['organizer_id'] = current_identity.id
     users = data.pop('users', None)
     try:
-        res_event = EventSchema().load(data)
+        res_event = EventSchema(exclude=['id']).load(data)
     except ValidationError:
         return "Validation failed", 400
 
@@ -144,7 +145,7 @@ def change_event():
     event.name = event.name if not 'name' in data else data['name']
     event.description = event.description if not 'description' in data else data['description']
     event.event_date = event.event_date if not 'event_date' in data else data['event_date']
-    event.organizer_id = event.organizer_id if not 'organizer_id' in data else data['organizer_id']
+    # event.organizer_id = event.organizer_id if not 'organizer_id' in data else data['organizer_id']
 
     if 'users' in data:
         event.users = []

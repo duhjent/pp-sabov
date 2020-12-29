@@ -23,3 +23,26 @@ Gunicorn (which is installed as a dependency):
 cd application
 gunicorn application/application:app
 ```
+
+__To run application after laba 7__
+* ######Windows
+```
+venv\Scripts\activate
+alembic lalala...
+cd application
+set FLASK_APP=application.py  
+set FLASK_DEBUG=1
+flask run
+```
+
+* ######Linux
+```
+venv\bin\activate
+alembic lalala...
+cd application
+export FLASK_APP=application.py  
+export FLASK_DEBUG=1
+flask run
+```
+
+Use file  _lab7templates.txt_  to make your life easier

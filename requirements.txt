@@ -1,2 +1,11 @@
 Flask
 gunicorn
+sqlalchemy
+pymysql
+alembic
+cryptography
+flask-sqlalchemy
+flask-migrate
+marshmallow
+flask_bcrypt
+Flask-JWT

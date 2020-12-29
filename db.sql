@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS events(
+    id INT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(500),
+    event_date DATE NOT NULL,
+    organizer_id INT NOT NULL,
+    FOREIGN KEY (organizer_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS users(
+    id INT PRIMARY KEY,
+    email VARCHAR(60) NOT NULL,
+    username VARCHAR(50) NOT NULL,
+    password VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS event_user(
+    event_id INT NOT NULL,
+    user_id INT NOT NULL,
+    FOREIGN KEY (event_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES events(id) ON UPDATE CASCADE ON DELETE CASCADE
+);

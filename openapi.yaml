@@ -1,0 +1,263 @@
+openapi: 3.0.0
+info:
+  title: Calendar API
+  version: 0.1.0
+  description: A calendar API for pp labs.
+  
+tags:
+- name: event
+  description: Event-related actions.
+- name: user
+  description: Account management.
+
+components:
+  schemas:
+    Event:
+      properties:
+        id:
+          type: integer
+          format: int64
+        date:
+          type: string
+          format: date
+        organizerUsename:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        connectedUsers:
+          type: array
+          items:
+            type: string
+      required:
+        - date
+        - organizerId
+        - name
+    EventWithNoId:
+      properties:
+        date:
+          type: string
+          format: date
+        organizerId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        connectedUsers:
+          type: array
+          items:
+            type: string
+      required:
+        - date
+        - organizerId
+        - name
+    User:
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+        username:
+          type: string
+        connectedEvents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+      required:
+        - username
+    UserReg:
+      properties:
+        email:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+      required:
+        - username
+        - password
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /events:
+      get:
+        tags:
+          - event
+        summary: Find all the events
+        responses:
+          '200':
+            description: Successful operation.
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Event'
+      post:
+        security:
+          - bearer: []
+        tags:
+          - event
+        summary: Upload an event
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventWithNoId'
+          required: true
+        responses:
+          '201':
+            description: Successful operation, return same entity with id.
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Event'
+          '401':
+            description: Invalid token.
+      put:
+        security:
+          - bearer: []
+        tags:
+          - event
+        summary: Update and existing event
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        responses:
+          '200':
+            description: Event updated successfully.
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Event'
+          '400':
+            description: Invalid request body
+          '403':
+            description: Token bearer is not the creator or token is invalid
+  /events/{eventId}:
+    delete:
+      security:
+        - bearer: []
+      tags:
+        - event
+      summary: Delete an existing event
+      parameters:
+      - name: eventId
+        in: path
+        description: The id of the event to be deleted
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Deleted successfully
+        '403':
+          description: Token bearer is not the creator or token is invalid
+  /events/connected/{userID}:
+    get:
+      security:
+        - bearer: []
+      tags:
+        - event
+      summary: Find all the events to which the current user is connected
+      parameters:
+        - name: userID
+          in: path
+          description: The id of the event to be deleted
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful operation.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+  /user:
+    post:
+      tags:
+      - user
+      summary: Register a user
+      requestBody:
+        description: The user account
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserReg'
+      responses:
+        '201':
+          description: Sucessfully registered, return the token
+          content:
+            application/json:
+              schema:
+                type: string
+        '400':
+          description: Invalid body
+  /user/login:
+    get:
+      tags:
+      - user
+      summary: Log user into the system
+      parameters:
+      - name: username
+        in: query
+        description: The user name for login
+        required: true
+        schema:
+          type: string
+      - name: password
+        in: query
+        description: The password for login in clear text
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Susccessfully signed in, returning token
+          content:
+            application/json:
+              schema:
+                type: string
+        '400':
+          description: Invalid username/password supplied
+  /user/logout:
+    get:
+      tags:
+      - user
+      summary: Log out current user
+      responses:
+        '200':
+          description: successful operation
+  /user/{username}:
+    get:
+      tags:
+      - user
+      summary: Get a user by username
+      parameters:
+      - name: username
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successful operation, returning the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'

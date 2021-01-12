@@ -1,11 +1,13 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, MetaData
 from sqlalchemy.ext.declarative import declarative_base
 
-engine = create_engine('mysql+pymysql://sqlalchemy:flaskpass@localhost/flask_app?charset=utf8mb4')
+#engine = create_engine('mysql+pymysql://sqlalchemy:flaskpass@localhost/flask_app?charset=utf8mb4')
+engine = create_engine('mysql+pymysql://lab:password@localhost:3306/pplab?charset=utf8mb4')
 Session = sessionmaker(bind=engine)
-Base = declarative_base()
+metadata = MetaData(engine)
+Base = declarative_base(metadata)
 
 
 class Event(Base):

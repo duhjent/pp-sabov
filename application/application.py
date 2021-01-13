@@ -40,17 +40,6 @@ jwt = JWT(app, authenticate, identity)
 session = Session()
 
 
-@app.route('/api/v1/hello-world-26')
-def welcome():
-    return 'Hello world 26'
-
-
-@app.route('/protected')
-@jwt_required()
-def protected():
-    return UserSchema().dump(current_identity)
-
-
 class EventUserSchema(Schema):
     event_id = fields.Integer()
     user_id = fields.Integer()
@@ -88,15 +77,8 @@ class UserSchema(Schema):
 
 @app.route('/events', methods=['GET'])
 def get_events():
-    try:
-        events = session.query(Event).all()
-    except NameError:
-        return "this name is not defined", 404
-
-    try:
-        result = jsonify(EventSchema(many=True).dump(events))
-    except ValidationError:
-        return "Validation failed", 400
+    events = session.query(Event).all()
+    result = jsonify(EventSchema(many=True).dump(events))
 
     return result, 200
 
@@ -134,10 +116,9 @@ def change_event():
     except ValidationError:
         return "Validation failed", 400
 
-    try:
-        event = session.query(Event).filter(Event.id == data['id']).first()
-    except NameError:
-        return "this name is not defined", 404
+    event = session.query(Event).filter(Event.id == data['id']).first()
+    if event is None:
+        return "event not found", 404
 
     if event.organizer_id != current_identity.id:
         return 'you are not the organizer', 403
@@ -165,12 +146,11 @@ def delete_event(eventID):
     try:
         schema.load({'id': eventID})
     except ValidationError as err:
-        return err.messages, 404
+        return err.messages, 400
 
-    try:
-        event = session.query(Event).filter(Event.id == eventID).first()
-    except NameError:
-        return "this name is not defined", 404
+    event = session.query(Event).filter(Event.id == eventID).first()
+    if event is None:
+        return "event not found", 404
 
     if event.organizer_id != current_identity.id:
         return 'you are not the organizer', 403
@@ -181,7 +161,7 @@ def delete_event(eventID):
     return "Deleted successfully", 200
 
 
-@app.route('/events/conected/<userID>', methods=['GET'])
+@app.route('/events/connected/<userID>', methods=['GET'])
 @jwt_required()
 def get_user_events(userID):
     schema = UserSchema(only=['id'])
@@ -190,19 +170,12 @@ def get_user_events(userID):
     except ValidationError as err:
         return err.messages, 404
 
-    try:
-        events = []
-        eventusers = session.query(EventUser).filter(EventUser.user_id == userID).all()
-        for eventuser in eventusers:
-            events += session.query(Event).filter(Event.id == eventuser.event_id).all()
+    events = []
+    eventusers = session.query(EventUser).filter(EventUser.user_id == userID).all()
+    for eventuser in eventusers:
+        events += session.query(Event).filter(Event.id == eventuser.event_id).all()
 
-    except ValidationError:
-        return "Validation failed", 400
-
-    try:
-        result = jsonify(EventSchema(many=True).dump(events))
-    except ValidationError:
-        return "Validation failed", 400
+    result = jsonify(EventSchema(many=True).dump(events))
 
     return result, 200
 
@@ -215,7 +188,7 @@ def create_user():
 
     schema = UserSchema()
     if not session.query(User).filter(User.username == data['username']).first() is None:
-        return "This username already exists"
+        return "This username already exists", 400
 
     try:
         user = schema.load(data)
@@ -229,7 +202,7 @@ def create_user():
 
 
 @app.route('/users/<username>', methods=['GET'])
-def get_user_by_ID(username):
+def get_user_by_username(username):
     schema = UserSchema(only=['username'])
     try:
         schema.load({'username': username})
@@ -237,15 +210,12 @@ def get_user_by_ID(username):
         return err.messages, 404
 
     schema = UserSchema()
-    try:
-        user = session.query(User).filter(User.username == username).first()
-    except NameError:
+
+    user = session.query(User).filter(User.username == username).first()
+    if user is None:
         return "this name is not defined", 404
 
-    try:
-        user_data = UserSchema().dump(user)
-    except ValidationError:
-        return "Validation failed", 400
+    user_data = UserSchema().dump(user)
 
     return user_data, 200
 
